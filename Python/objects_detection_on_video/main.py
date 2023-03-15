@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pandas as pd
 from art import tprint
 from cap_from_youtube import cap_from_youtube
 
@@ -72,11 +73,23 @@ def draw_object_bounding_box(image_to_process, index, box):
     font_size = 1
     font = cv2.FONT_HERSHEY_SIMPLEX
     width = 2
+    cap_len = cap.get(cv2.CAP_PROP_FRAME_COUNT)/cap.get(cv2.CAP_PROP_FPS)
     text = classes[index]
     final_image = cv2.putText(final_image, text, start, font,
                               font_size, color, width, cv2.LINE_AA)
+    #file stdin 
     
-    print("cv2.CAP_PROP_POS_MSEC:'{}'".format(cap.get(cv2.CAP_PROP_POS_MSEC)))
+    time = cap.get(cv2.CAP_PROP_POS_FRAMES)/cap.get(cv2.CAP_PROP_FPS)
+    print("MSEC : '{}'".format(cap.get(cv2.CAP_PROP_POS_MSEC)/1000))
+    print("time : '{}'".format(time))
+    print(cap_len)
+    print("frame : '{}'".format(cap.get(cv2.CAP_PROP_POS_FRAMES)/cap.get(cv2.CAP_PROP_FRAME_COUNT)))
+    global df
+    df = df.append({'object': text,'time': time}, ignore_index=True)
+    print("#############################")
+    print(df)
+    print("#############################")
+    
 
     return final_image
 
@@ -109,6 +122,10 @@ def draw_object_count(image_to_process, objects_count):
 
 def start_video_object_detection(video: str):
     global cap
+    global df 
+    
+    global count
+    count =0
     while True:
         try:
             i = 0
@@ -125,11 +142,16 @@ def start_video_object_detection(video: str):
                 #print("cv2.CAP_PROP_POS_MSEC:'{}'".format(cap.get(cv2.CAP_PROP_POS_MSEC)))
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
+            global df
+            df['time'] = df['time'].astype(int)
+            df = df.drop_duplicates()
+            df.to_json("./example.json", orient = 'index')
             cv2.destroyAllWindows()
+            break
         except KeyboardInterrupt:
             pass
 
-
+df = pd.DataFrame(columns=['object','time'])
 if __name__ == '__main__':
 
     # Logo
@@ -144,6 +166,7 @@ if __name__ == '__main__':
     out_layers_indexes = net.getUnconnectedOutLayers()
     out_layers = [layer_names[index - 1] for index in out_layers_indexes]
 
+    
     # Loading from a file of object classes that YOLO can detect
     with open("Resources/coco.names.txt") as file:
         classes = file.read().split("\n")
