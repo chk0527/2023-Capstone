@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from "react";
 import { Button, View, Alert } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 //위 모듈 설치해서 사용 하기! - 추후 다른 모듈 실행해볼것
+//react-native-webview를 먼저 설치하는것을 권장한다고 함
 
 export default function App() {
   const [playing, setPlaying] = useState(false);
